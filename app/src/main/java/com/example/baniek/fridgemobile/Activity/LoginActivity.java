@@ -23,7 +23,7 @@ import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private DataBaseService dataBaseService = DataBaseService.getInstance();
+    private DataBaseService dataBaseService;
     private RestController restController = RestController.getInstance();
     private Button loginButton;
     private Button createButton;
@@ -33,6 +33,9 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        dataBaseService = DataBaseService.getInstance(this);
+
         setContentView(R.layout.activity_login);
 
         loginButton = (Button) findViewById(R.id.LoginButton);

@@ -32,7 +32,7 @@ import retrofit2.Response;
 
 public class FridgeActivity extends AppCompatActivity {
 
-    private DataBaseService dataBaseService = DataBaseService.getInstance();
+    private DataBaseService dataBaseService;
     private RestController restController = RestController.getInstance();
     private ProductCollection products = ProductCollection.getInstance();
     private ProductAdapter productAdapter;
@@ -46,16 +46,12 @@ public class FridgeActivity extends AppCompatActivity {
         productAdapter.notifyDataSetChanged();
     }
 
-    @Override //UPEWNIC SIE CZY TO JEST OK
-    protected void onDestroy() {
-        super.onDestroy();
-        dataBaseService.Close();
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fridge);
+
+        dataBaseService = DataBaseService.getInstance(this);
 
         context = this;
         user = new User(getIntent().getStringExtra("login"), getIntent().getStringExtra("password"));
