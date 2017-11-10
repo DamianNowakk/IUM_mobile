@@ -44,7 +44,7 @@ public class ProductActivity extends AppCompatActivity {
         Button updateButton = (Button) findViewById(R.id.updateButton);
 
         nameEditText.setText(product.getName());
-        priceEditText.setText(product.getPrice().toString());
+        priceEditText.setText(Float.toString(product.getPrice()));
         amountEditText.setText(product.getAmount().toString());
 
 
@@ -53,7 +53,7 @@ public class ProductActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 product.setName(nameEditText.getText().toString());
-                product.setPrice(Double.valueOf(priceEditText.getText().toString()));
+                product.setPrice(Float.valueOf(priceEditText.getText().toString()));
                 product.setAmount(Integer.valueOf(amountEditText.getText().toString()));
 
 

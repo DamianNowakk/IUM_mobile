@@ -143,7 +143,7 @@ public class DataBaseService extends SQLiteOpenHelper {
             product.setId(cursor.getInt(0));
             product.setUserLogin(cursor.getString(1));
             product.setName(cursor.getString(2));
-            product.setPrice(cursor.getDouble(3));
+            product.setPrice(cursor.getFloat(3));
             product.setAmount(cursor.getInt(4));
         } finally {
             cursor.close();
@@ -166,7 +166,7 @@ public class DataBaseService extends SQLiteOpenHelper {
                 product.setId(cursor.getInt(0));
                 product.setUserLogin(cursor.getString(1));
                 product.setName(cursor.getString(2));
-                product.setPrice(cursor.getDouble(3));
+                product.setPrice(cursor.getFloat(3));
                 product.setAmount(cursor.getInt(4));
                 productArrayList.add(product);
             }
@@ -185,14 +185,21 @@ public class DataBaseService extends SQLiteOpenHelper {
         contentValues.put(PRODUCT_NAME, product.getName());
         contentValues.put(PRODUCT_PRICE, product.getPrice());
         contentValues.put(PRODUCT_AMOUNT, product.getAmount());
-        long result = db.update(TABLE_PRODUCT, contentValues, "ID = ?", new String[]{Integer.toString(product.getId())});
+        long result = db.update(TABLE_PRODUCT, contentValues, "Id = ?", new String[]{Integer.toString(product.getId())});
         return result != -1;
     }
 
-    public boolean DeleteProduct(Product product)
+    public boolean DeleteProduct(int id)
     {
         SQLiteDatabase db = this.getWritableDatabase();
-        long result = db.delete(TABLE_PRODUCT, "ID = ?", new String[]{Integer.toString(product.getId())});
+        long result = db.delete(TABLE_PRODUCT, "Id = ?", new String[]{Integer.toString(id)});
+        return result != -1;
+    }
+
+    public boolean DeleteProducts(String login)
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        long result = db.delete(TABLE_PRODUCT, "UserLogin = ?", new String[]{login});
         return result != -1;
     }
 }

@@ -47,6 +47,8 @@ public class ProductCollection {
     }
 
     public void addProducts(ArrayList<Product> products) {
+        if(products == null)
+            return;
         for(Product product : products)
         {
             addProduct(product);

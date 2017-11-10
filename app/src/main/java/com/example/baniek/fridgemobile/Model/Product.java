@@ -17,12 +17,12 @@ public class Product {
     private String name;
     @SerializedName("Price")
     @Expose
-    private Double price;
+    private float price;
     @SerializedName("Amount")
     @Expose
     private Integer amount;
 
-    public Product(int id, String userLogin, String name, double price, int amount) {
+    public Product(int id, String userLogin, String name, float price, int amount) {
         this.id = id;
         this.userLogin = userLogin;
         this.name = name;
@@ -30,7 +30,7 @@ public class Product {
         this.amount = amount;
     }
 
-    public Product(String userLogin, String name, double price, int amount) {
+    public Product(String userLogin, String name, float price, int amount) {
         this.userLogin = userLogin;
         this.name = name;
         this.price = price;
@@ -65,11 +65,11 @@ public class Product {
         this.name = name;
     }
 
-    public Double getPrice() {
+    public float getPrice() {
         return price;
     }
 
-    public void setPrice(Double price) {
+    public void setPrice(float price) {
         this.price = price;
     }
 

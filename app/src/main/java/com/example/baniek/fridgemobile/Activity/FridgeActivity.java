@@ -5,6 +5,8 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -62,8 +64,23 @@ public class FridgeActivity extends AppCompatActivity {
 
         OnItemClick();
         onItemLongClick();
-        reciveData();
+        if(isOnline())
+        {
+            getDataFromServer();
+        }
+        else
+        {
+            getDataFromDataBase();
+        }
+
         setAddButton();
+    }
+
+    public boolean isOnline() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     private void setAddButton() {
@@ -101,7 +118,7 @@ public class FridgeActivity extends AppCompatActivity {
                             public void onClick(DialogInterface dialogInterface, int i) {
                                 int id = products.getProduct(position).getId();
                                 restController.DeleteProducts(id , user.getLogin(), user.getPassword());
-
+                                dataBaseService.DeleteProduct(id);
                                 products.deleteProduct(position);
                                 productAdapter.notifyDataSetChanged();
                             }
@@ -118,13 +135,14 @@ public class FridgeActivity extends AppCompatActivity {
         });
     }
 
-    private void reciveData() {
-        products.clear();
+    private void getDataFromServer() {
+
         Callback<ArrayList<Product>> callback = new Callback<ArrayList<Product>>() {
             @Override
             public void onResponse(Call<ArrayList<Product>> call, Response<ArrayList<Product>> response) {
-                products.addProducts(response.body());
-                productAdapter.notifyDataSetChanged();
+                dataBaseService.DeleteProducts(user.getLogin());
+                dataBaseService.AddProducts(response.body());
+                setData(response.body());
             }
 
             @Override
@@ -133,6 +151,17 @@ public class FridgeActivity extends AppCompatActivity {
             }
         };
         restController.GetAllProducts(callback, user.getLogin(), user.getPassword());
+    }
+
+    private void getDataFromDataBase() {
+        setData(dataBaseService.GetProducts(user.getLogin()));
+    }
+
+    private void setData(ArrayList<Product> products)
+    {
+        this.products.clear();
+        this.products.addProducts(products);
+        productAdapter.notifyDataSetChanged();
     }
 
     private void showDialogCreateProduct()
@@ -149,7 +178,7 @@ public class FridgeActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String name = txtUsername.getText().toString();
-                double price = Double.parseDouble(txtPassword.getText().toString());
+                float price = Float.parseFloat(txtPassword.getText().toString());
 
                 final Product product = new Product(user.getLogin(), name, price, 0);
 
@@ -176,6 +205,7 @@ public class FridgeActivity extends AppCompatActivity {
                 };
 
                 restController.AddProducts(product, callback, user.getLogin(), user.getPassword());
+                dataBaseService.AddProduct(product);
 
             }
         });

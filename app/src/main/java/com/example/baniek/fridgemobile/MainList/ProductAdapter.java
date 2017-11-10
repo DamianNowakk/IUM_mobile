@@ -51,7 +51,7 @@ public class ProductAdapter extends BaseAdapter {
         TextView productAmountTextView = (TextView) convertView.findViewById(R.id.productAmount);
 
         productNameTextView.setText(products.get(position).getName());
-        productPriceTextView.setText(products.get(position).getPrice().toString());
+        productPriceTextView.setText(Float.toString(products.get(position).getPrice()));
         productAmountTextView.setText(products.get(position).getAmount().toString());
 
         return convertView;
