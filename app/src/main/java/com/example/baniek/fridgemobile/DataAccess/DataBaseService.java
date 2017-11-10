@@ -110,29 +110,89 @@ public class DataBaseService extends SQLiteOpenHelper {
     }
 
     //PRODUCT
-    public void AddProduct(Product product)
+    public boolean AddProduct(Product product)
     {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(PRODUCT_ID, product.getId());
+        contentValues.put(PRODUCT_USER_LOGIN, product.getUserLogin());
+        contentValues.put(PRODUCT_NAME, product.getName());
+        contentValues.put(PRODUCT_PRICE, product.getPrice());
+        contentValues.put(PRODUCT_AMOUNT, product.getAmount());
+        long result = db.insert(TABLE_PRODUCT, null, contentValues);
+        return result != -1;
+    }
 
+    public void AddProducts(ArrayList<Product> products)
+    {
+        for (Product product: products) {
+            AddProduct(product);
+        }
     }
 
     public Product GetProduct(Integer id)
     {
-        return null;
+        SQLiteDatabase db = this.getWritableDatabase();
+        Product product = new Product();
+        String query = "select * from " + TABLE_PRODUCT + " where " + PRODUCT_ID + " = '" + id + "'";
+        Cursor cursor = db.rawQuery(query, null);
+        if (cursor.getCount() == 0)
+            return null;
+        try {
+            cursor.moveToNext();
+            product.setId(cursor.getInt(0));
+            product.setUserLogin(cursor.getString(1));
+            product.setName(cursor.getString(2));
+            product.setPrice(cursor.getDouble(3));
+            product.setAmount(cursor.getInt(4));
+        } finally {
+            cursor.close();
+        }
+        return product;
     }
 
-    public Product GetProducts(String login)
+    public ArrayList<Product> GetProducts(String login)
     {
-
-        return null;
+        SQLiteDatabase db = this.getWritableDatabase();
+        ArrayList<Product> productArrayList = new ArrayList<>();
+        String query = "select * from " + TABLE_PRODUCT + " where " + PRODUCT_USER_LOGIN + " = '" + login + "'";
+        Cursor cursor = db.rawQuery(query, null);
+        if (cursor.getCount() == 0)
+            return null;
+        try {
+            for(int i=0; i < cursor.getCount(); i++) {
+                Product product = new Product();
+                cursor.moveToNext();
+                product.setId(cursor.getInt(0));
+                product.setUserLogin(cursor.getString(1));
+                product.setName(cursor.getString(2));
+                product.setPrice(cursor.getDouble(3));
+                product.setAmount(cursor.getInt(4));
+                productArrayList.add(product);
+            }
+        } finally {
+            cursor.close();
+        }
+        return productArrayList;
     }
 
-    public void UpdateProduct(Product product)
+    public boolean UpdateProduct(Product product)
     {
-
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(PRODUCT_ID, product.getId());
+        contentValues.put(PRODUCT_USER_LOGIN, product.getUserLogin());
+        contentValues.put(PRODUCT_NAME, product.getName());
+        contentValues.put(PRODUCT_PRICE, product.getPrice());
+        contentValues.put(PRODUCT_AMOUNT, product.getAmount());
+        long result = db.update(TABLE_PRODUCT, contentValues, "ID = ?", new String[]{Integer.toString(product.getId())});
+        return result != -1;
     }
 
-    public void DeleteProduct(Product product)
+    public boolean DeleteProduct(Product product)
     {
-
+        SQLiteDatabase db = this.getWritableDatabase();
+        long result = db.delete(TABLE_PRODUCT, "ID = ?", new String[]{Integer.toString(product.getId())});
+        return result != -1;
     }
 }
