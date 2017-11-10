@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">FridgeMobile</string>
+    <string name="password">Password</string>
+    <string name="username">Username</string>
+    <string name="login">Login</string>
+    <string name="loginBig">LOGIN</string>
+    <string name="register">Register</string>
+    <string name="repeat_password">Repeat Password</string>
+    <string name="create_dialog_register">Create</string>
+    <string name="cancel_dialog_register">Cancel</string>
+    <string name="title_activity_d">d</string>
+    <string name="add">add</string>
+    <string name="name">Name</string>
+    <string name="price">Price</string>
+
+</resources>
