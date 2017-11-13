@@ -21,12 +21,13 @@ public class DataBaseService extends SQLiteOpenHelper {
     private static final String USER_PASSWORD = "Password";
 
     private static final String TABLE_PRODUCT = "Product";
-    private static final String TABLE_PRODUCT_TMP = "ProductTmp";
     private static final String PRODUCT_ID = "Id";
     private static final String PRODUCT_USER_LOGIN = "UserLogin";
     private static final String PRODUCT_NAME = "Name";
     private static final String PRODUCT_PRICE = "Price";
     private static final String PRODUCT_AMOUNT = "Amount";
+    private static final String PRODUCT_VALUE_LAST_MODYFIED = "ValueLastModyfied";
+    private static final String PRODUCT_ISSYNC = "IsSync";
 
     private static DataBaseService sInstance;
 
@@ -45,23 +46,19 @@ public class DataBaseService extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         String CREATE_TABLE = "CREATE TABLE " + TABLE_USER + "("
                 + USER_LOGIN + " TEXT PRIMARY KEY,"
-                + USER_PASSWORD + " TEXT" + ")";
+                + USER_PASSWORD + " TEXT"
+                + ")";
         db.execSQL(CREATE_TABLE);
 
         CREATE_TABLE = "CREATE TABLE " + TABLE_PRODUCT + "("
-                + PRODUCT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + PRODUCT_ID + " INTEGER PRIMARY KEY,"
                 + PRODUCT_USER_LOGIN + " TEXT,"
                 + PRODUCT_NAME + " TEXT,"
                 + PRODUCT_PRICE + " REAL,"
-                + PRODUCT_AMOUNT + " INTEGER" + ")";
-        db.execSQL(CREATE_TABLE);
-
-        CREATE_TABLE = "CREATE TABLE " + TABLE_PRODUCT_TMP + "("
-                + PRODUCT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + PRODUCT_USER_LOGIN + " TEXT,"
-                + PRODUCT_NAME + " TEXT,"
-                + PRODUCT_PRICE + " REAL,"
-                + PRODUCT_AMOUNT + " INTEGER" + ")";
+                + PRODUCT_AMOUNT + " INTEGER,"
+                + PRODUCT_VALUE_LAST_MODYFIED + " INTEGER,"
+                + PRODUCT_ISSYNC + " INTEGER"
+                + ")";
         db.execSQL(CREATE_TABLE);
     }
 
@@ -69,7 +66,6 @@ public class DataBaseService extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUCT);
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUCT_TMP);
         onCreate(db);
     }
 
@@ -119,6 +115,8 @@ public class DataBaseService extends SQLiteOpenHelper {
         contentValues.put(PRODUCT_NAME, product.getName());
         contentValues.put(PRODUCT_PRICE, product.getPrice());
         contentValues.put(PRODUCT_AMOUNT, product.getAmount());
+        contentValues.put(PRODUCT_VALUE_LAST_MODYFIED, product.getValueLastModyfide());
+        contentValues.put(PRODUCT_ISSYNC, product.isSync());
         long result = db.insert(TABLE_PRODUCT, null, contentValues);
         return result != -1;
     }
@@ -145,6 +143,11 @@ public class DataBaseService extends SQLiteOpenHelper {
             product.setName(cursor.getString(2));
             product.setPrice(cursor.getFloat(3));
             product.setAmount(cursor.getInt(4));
+            product.setValueLastModyfide(cursor.getInt(5));
+            if (cursor.getString(6).equals("1"))
+                product.setSync(true);
+            else
+                product.setSync(false);
         } finally {
             cursor.close();
         }
@@ -168,6 +171,11 @@ public class DataBaseService extends SQLiteOpenHelper {
                 product.setName(cursor.getString(2));
                 product.setPrice(cursor.getFloat(3));
                 product.setAmount(cursor.getInt(4));
+                product.setValueLastModyfide(cursor.getInt(5));
+                if (cursor.getString(6).equals("1"))
+                    product.setSync(true);
+                else
+                    product.setSync(false);
                 productArrayList.add(product);
             }
         } finally {
@@ -175,6 +183,8 @@ public class DataBaseService extends SQLiteOpenHelper {
         }
         return productArrayList;
     }
+
+
 
     public boolean UpdateProduct(Product product)
     {
@@ -185,6 +195,8 @@ public class DataBaseService extends SQLiteOpenHelper {
         contentValues.put(PRODUCT_NAME, product.getName());
         contentValues.put(PRODUCT_PRICE, product.getPrice());
         contentValues.put(PRODUCT_AMOUNT, product.getAmount());
+        contentValues.put(PRODUCT_VALUE_LAST_MODYFIED, product.getValueLastModyfide());
+        contentValues.put(PRODUCT_ISSYNC, product.isSync());
         long result = db.update(TABLE_PRODUCT, contentValues, "Id = ?", new String[]{Integer.toString(product.getId())});
         return result != -1;
     }
@@ -200,6 +212,43 @@ public class DataBaseService extends SQLiteOpenHelper {
     {
         SQLiteDatabase db = this.getWritableDatabase();
         long result = db.delete(TABLE_PRODUCT, "UserLogin = ?", new String[]{login});
+        return result != -1;
+    }
+
+    public ArrayList<Product> GetProductsSync(String login)
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ArrayList<Product> productArrayList = new ArrayList<>();
+        String query = "select * from " + TABLE_PRODUCT + " where " + PRODUCT_USER_LOGIN + " = '" + login + "' AND " + PRODUCT_ISSYNC + " = 0";
+        Cursor cursor = db.rawQuery(query, null);
+        if (cursor.getCount() == 0)
+            return null;
+        try {
+            for(int i=0; i < cursor.getCount(); i++) {
+                Product product = new Product();
+                cursor.moveToNext();
+                product.setId(cursor.getInt(0));
+                product.setUserLogin(cursor.getString(1));
+                product.setName(cursor.getString(2));
+                product.setPrice(cursor.getFloat(3));
+                product.setAmount(cursor.getInt(4));
+                product.setValueLastModyfide(cursor.getInt(5));
+                if (cursor.getString(6).equals("1"))
+                    product.setSync(true);
+                else
+                    product.setSync(false);
+                productArrayList.add(product);
+            }
+        } finally {
+            cursor.close();
+        }
+        return productArrayList;
+    }
+
+    public boolean DeleteProductsSync(String login)
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        long result = db.delete(TABLE_PRODUCT, "UserLogin = ? AND IsSync = ?", new String[]{login, "0"});
         return result != -1;
     }
 }

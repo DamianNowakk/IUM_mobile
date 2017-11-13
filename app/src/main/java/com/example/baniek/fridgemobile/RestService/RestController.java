@@ -81,4 +81,10 @@ public class RestController  {
         Call call = api.updateProduct(product ,product.getId(), login, password);
         call.enqueue(callback);
     }
+
+    public void ChangeAmount(int id, int value ,Callback<Product> callback, String login, String password)
+    {
+        Call call = api.changeAmount(id, value, login, password);
+        call.enqueue(callback);
+    }
 }

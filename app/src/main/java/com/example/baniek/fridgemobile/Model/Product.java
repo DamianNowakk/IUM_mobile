@@ -20,7 +20,21 @@ public class Product {
     private float price;
     @SerializedName("Amount")
     @Expose
-    private Integer amount;
+    private  Integer amount;
+
+    private transient Integer valueLastModyfide = 0;
+
+    private transient boolean  isSync = false;
+
+    public Product(Integer id, String userLogin, String name, float price, Integer amount, Integer valueLastModyfide, boolean isSync) {
+        this.id = id;
+        this.userLogin = userLogin;
+        this.name = name;
+        this.price = price;
+        this.amount = amount;
+        this.valueLastModyfide = valueLastModyfide;
+        this.isSync = isSync;
+    }
 
     public Product(int id, String userLogin, String name, float price, int amount) {
         this.id = id;
@@ -81,4 +95,25 @@ public class Product {
         this.amount = amount;
     }
 
+    public Integer getValueLastModyfide() {
+        return valueLastModyfide;
+    }
+
+    public void setValueLastModyfide(Integer valueLastModyfide) {
+        this.valueLastModyfide = valueLastModyfide;
+    }
+
+    public boolean isSync() {
+        return isSync;
+    }
+
+    public void setSync(boolean sync) {
+        isSync = sync;
+    }
+
+    public void sync()
+    {
+        valueLastModyfide = 0;
+        isSync = true;
+    }
 }

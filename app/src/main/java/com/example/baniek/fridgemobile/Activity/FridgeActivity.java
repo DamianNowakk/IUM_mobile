@@ -10,6 +10,9 @@ import android.net.NetworkInfo;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -55,6 +58,7 @@ public class FridgeActivity extends AppCompatActivity {
 
         dataBaseService = DataBaseService.getInstance(this);
 
+
         context = this;
         user = new User(getIntent().getStringExtra("login"), getIntent().getStringExtra("password"));
 
@@ -64,16 +68,85 @@ public class FridgeActivity extends AppCompatActivity {
 
         OnItemClick();
         onItemLongClick();
+        setAddButton();
+
         if(isOnline())
         {
-            getDataFromServer();
+            sync();
         }
         else
         {
             getDataFromDataBase();
         }
+    }
 
-        setAddButton();
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.main_menu, menu);
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if(id == R.id.sync_button)
+        {
+            sync();
+            Toast.makeText(FridgeActivity.this, "sync data", Toast.LENGTH_LONG).show();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void sync() {
+        if(isOnline())
+        {
+            ArrayList<Product> syncProducts = dataBaseService.GetProductsSync(user.getLogin());
+            if(syncProducts == null) {
+                getDataFromServer();
+                return;
+            }
+            for (int i = 0; i < syncProducts.size(); i++) {
+                Product product = syncProducts.get(i);
+
+                Callback callback;
+                if(i == syncProducts.size() - 1) {
+                    callback = new Callback() {
+                        @Override
+                        public void onResponse(Call call, Response response) {
+                            getDataFromServer();
+                        }
+
+                        @Override
+                        public void onFailure(Call call, Throwable t) {
+
+                        }
+                    };
+                }
+                else
+                {
+                    callback = new Callback() {
+                        @Override
+                        public void onResponse(Call call, Response response) {
+
+                        }
+
+                        @Override
+                        public void onFailure(Call call, Throwable t) {
+
+                        }
+                    };
+                }
+                restController.ChangeAmount(product.getId(), product.getValueLastModyfide(), callback, user.getLogin(), user.getPassword());
+            }
+
+
+        }
+        else
+        {
+            Toast.makeText(FridgeActivity.this, "Some problem with internet", Toast.LENGTH_LONG).show();
+        }
     }
 
     public boolean isOnline() {
@@ -141,13 +214,19 @@ public class FridgeActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<ArrayList<Product>> call, Response<ArrayList<Product>> response) {
                 dataBaseService.DeleteProducts(user.getLogin());
-                dataBaseService.AddProducts(response.body());
-                setData(response.body());
+                ArrayList<Product> tmp = response.body();
+                for (Product product: tmp) {
+                    product.setSync(true);
+                }
+                dataBaseService.AddProducts(tmp);
+                setData(tmp);
             }
 
             @Override
             public void onFailure(Call<ArrayList<Product>> call, Throwable t) {
+                getDataFromDataBase();
                 t.printStackTrace();
+                Toast.makeText(FridgeActivity.this, "Some problem with internet - getDataFromServer", Toast.LENGTH_LONG).show();
             }
         };
         restController.GetAllProducts(callback, user.getLogin(), user.getPassword());
@@ -182,31 +261,38 @@ public class FridgeActivity extends AppCompatActivity {
 
                 final Product product = new Product(user.getLogin(), name, price, 0);
 
+                if(isOnline()) {
+                    Callback callback = new Callback() {
+                        @Override
+                        public void onResponse(Call call, Response response) {
+                            Headers headers = response.headers();
+                            String location = response.headers().get("Location");
+                            product.setId(Integer.valueOf(location.substring(location.lastIndexOf("/") + 1, location.length())));
 
-                Callback callback = new Callback() {
-                    @Override
-                    public void onResponse(Call call, Response response) {
-                        Headers headers = response.headers();
-                        String location = response.headers().get("Location");
-                        product.setId(Integer.valueOf(location.substring(location.lastIndexOf("/") + 1, location.length())));
+                            product.setSync(true);
+                            dataBaseService.AddProduct(product);
 
-                        dataBaseService.AddProduct(product);
+                            dataBaseService.AddProduct(product);
 
-                        products.addProduct(product);
-                        productAdapter.notifyDataSetChanged();
+                            products.addProduct(product);
+                            productAdapter.notifyDataSetChanged();
 
-                        addDialog.dismiss();
-                    }
+                            addDialog.dismiss();
+                        }
 
-                    @Override
-                    public void onFailure(Call call, Throwable t) {
-                        Toast.makeText(FridgeActivity.this, "Some problem with internet", Toast.LENGTH_LONG).show();
-                    }
-                };
+                        @Override
+                        public void onFailure(Call call, Throwable t) {
+                            Toast.makeText(FridgeActivity.this, "Some problem with internet", Toast.LENGTH_LONG).show();
+                        }
+                    };
 
-                restController.AddProducts(product, callback, user.getLogin(), user.getPassword());
-                dataBaseService.AddProduct(product);
-
+                    restController.AddProducts(product, callback, user.getLogin(), user.getPassword());
+                }
+                else
+                {
+                    product.setSync(false);
+                    dataBaseService.AddProduct(product);
+                }
             }
         });
         btnCancel.setOnClickListener(new View.OnClickListener() {
