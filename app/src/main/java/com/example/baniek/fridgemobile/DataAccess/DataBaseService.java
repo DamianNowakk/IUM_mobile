@@ -10,6 +10,7 @@ import com.example.baniek.fridgemobile.Model.Product;
 import com.example.baniek.fridgemobile.Model.User;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class DataBaseService extends SQLiteOpenHelper {
 
@@ -28,6 +29,9 @@ public class DataBaseService extends SQLiteOpenHelper {
     private static final String PRODUCT_AMOUNT = "Amount";
     private static final String PRODUCT_VALUE_LAST_MODYFIED = "ValueLastModyfied";
     private static final String PRODUCT_ISSYNC = "IsSync";
+
+    private static final String TABLE_DEVICE = "Device";
+    private static final String DEVICE_GUID = "Guid";
 
     private static DataBaseService sInstance;
 
@@ -60,12 +64,18 @@ public class DataBaseService extends SQLiteOpenHelper {
                 + PRODUCT_ISSYNC + " INTEGER"
                 + ")";
         db.execSQL(CREATE_TABLE);
+
+        CREATE_TABLE = "CREATE TABLE " + TABLE_DEVICE + "("
+                + DEVICE_GUID + " TEXT PRIMARY KEY"
+                + ")";
+        db.execSQL(CREATE_TABLE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUCT);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_DEVICE);
         onCreate(db);
     }
 
@@ -74,6 +84,39 @@ public class DataBaseService extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         onUpgrade(db, 1, 1);
     }
+
+    //GUID
+    public boolean AddGUID()
+    {
+        if(GetGUID() != null)
+            return false;
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DEVICE_GUID,  UUID.randomUUID().toString());
+        long result = db.insert(TABLE_DEVICE, null, contentValues);
+        return result != -1;
+    }
+
+    public String GetGUID()
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        String guid = null;
+        String query = "select * from " + TABLE_DEVICE;
+        Cursor cursor = db.rawQuery(query, null);
+        if (cursor.getCount() != 1)
+            return guid;
+        try {
+            for(int i=0; i < cursor.getCount(); i++) {
+                cursor.moveToNext();
+                guid = cursor.getString(0);
+            }
+        } finally {
+            cursor.close();
+        }
+        return guid;
+    }
+
+
 
     // USER
     public boolean AddUser(User user)

@@ -1,5 +1,7 @@
 package com.example.baniek.fridgemobile.RestService;
 
+import com.example.baniek.fridgemobile.Activity.FridgeActivity;
+import com.example.baniek.fridgemobile.DataAccess.DataBaseService;
 import com.example.baniek.fridgemobile.Model.Product;
 import com.example.baniek.fridgemobile.Model.User;
 
@@ -15,7 +17,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class RestController  {
 
     private static final String ENDPOINT_URL = "http://192.168.0.3:62838/";
+    private DataBaseService dataBaseService;
     private Api api;
+    private String guid;
 
     private static final RestController ourInstance = new RestController();
 
@@ -31,7 +35,11 @@ public class RestController  {
         api = retrofit.create(Api.class);
     }
 
-    public void GetUser(Callback<User> callback ,String login, String password)
+    public void setGuid(String guid) {
+        this.guid = guid;
+    }
+
+    public void GetUser(Callback<User> callback , String login, String password)
     {
         Call<User> call = api.GetUser(login, password);
         call.enqueue(callback);

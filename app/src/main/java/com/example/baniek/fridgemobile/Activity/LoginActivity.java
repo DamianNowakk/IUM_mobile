@@ -35,8 +35,11 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         dataBaseService = DataBaseService.getInstance(this);
-
         setContentView(R.layout.activity_login);
+
+        dataBaseService.AddGUID();
+        String guid = dataBaseService.GetGUID();
+        restController.setGuid(guid);
 
         loginButton = (Button) findViewById(R.id.LoginButton);
         createButton = (Button) findViewById(R.id.CreateButton);
@@ -49,6 +52,7 @@ public class LoginActivity extends AppCompatActivity {
         SharedPreferences shared = getSharedPreferences("data",MODE_PRIVATE);
         String login = shared.getString("login", null);
         String password = shared.getString("password", null);
+
         if(login != null && password != null)
         {
             User user = dataBaseService.GetUser(login);
