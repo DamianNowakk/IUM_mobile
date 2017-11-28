@@ -33,11 +33,11 @@ public interface Api {
     Call<Void> DeleteProduct(@Path("id") int id, @Query("login") String login, @Query("password") String password);
 
     @POST("api/Product")
-    Call<Void> AddProduct (@Body Product product, @Query("login") String login, @Query("password") String password);
+    Call<Void> AddProduct (@Body Product product, @Query("login") String login, @Query("password") String password, @Query("guid") String guid);
 
     @PUT("api/Product/{id}")
-    Call<Void> updateProduct (@Body Product product, @Path("id") int id, @Query("login") String login, @Query("password") String password);
+    Call<Void> updateProduct (@Body Product product, @Path("id") int id, @Query("login") String login, @Query("password") String password, @Query("guid") String guid);
 
     @PUT("api/Product/{id}/UpdateAmount/{value}")
-    Call<Void> changeAmount (@Path("id") int id, @Path("value") int value, @Query("login") String login, @Query("password") String password);
+    Call<Void> changeAmount (@Path("id") int id, @Path("value") int value, @Query("login") String login, @Query("password") String password, @Query("guid") String guid);
 }

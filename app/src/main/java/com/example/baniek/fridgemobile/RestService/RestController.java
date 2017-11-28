@@ -80,19 +80,19 @@ public class RestController  {
 
     public void AddProducts(Product product ,Callback<Product> callback, String login, String password)
     {
-        Call call = api.AddProduct(product, login, password);
+        Call call = api.AddProduct(product, login, password, guid);
         call.enqueue(callback);
     }
 
     public void UpdateProducts(Product product ,Callback<Product> callback, String login, String password)
     {
-        Call call = api.updateProduct(product ,product.getId(), login, password);
+        Call call = api.updateProduct(product ,product.getId(), login, password, guid);
         call.enqueue(callback);
     }
 
     public void ChangeAmount(int id, int value ,Callback<Product> callback, String login, String password)
     {
-        Call call = api.changeAmount(id, value, login, password);
+        Call call = api.changeAmount(id, value, login, password, guid);
         call.enqueue(callback);
     }
 }

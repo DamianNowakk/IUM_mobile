@@ -113,7 +113,6 @@ public class Product {
 
     public void sync()
     {
-        valueLastModyfide = 0;
         isSync = true;
     }
 }
