@@ -44,6 +44,7 @@ public class FridgeActivity extends AppCompatActivity {
     private ListView listView;
     private Context context;
     private User user;
+    private MenuItem menuItem;
 
     @Override
     protected void onResume() {
@@ -72,7 +73,7 @@ public class FridgeActivity extends AppCompatActivity {
 
         if(isOnline())
         {
-            sync();
+            sync(null);
         }
         else
         {
@@ -85,6 +86,8 @@ public class FridgeActivity extends AppCompatActivity {
         MenuInflater menuInflater = getMenuInflater();
         menuInflater.inflate(R.menu.main_menu, menu);
 
+        menuItem = menu.getItem(0);
+
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -93,17 +96,22 @@ public class FridgeActivity extends AppCompatActivity {
         int id = item.getItemId();
         if(id == R.id.sync_button)
         {
-            sync();
+            sync(item);
         }
         return super.onOptionsItemSelected(item);
     }
 
-    private void sync() {
+    private void sync(final MenuItem item) {
         if(isOnline())
         {
+            if(item != null)
+            {
+                item.setEnabled(false);
+                item.getIcon().setAlpha(100);
+            }
             ArrayList<Product> syncProducts = dataBaseService.GetProductsSync(user.getLogin());
             if(syncProducts == null || syncProducts.size() == 0) {
-                getDataFromServer();
+                getDataFromServer(item);
                 return;
             }
             for (int i = 0; i < syncProducts.size(); i++) {
@@ -122,7 +130,7 @@ public class FridgeActivity extends AppCompatActivity {
                             {
                                 dataBaseService.DeleteProductNew(product.getId());
                             }
-                            getDataFromServer();
+                            getDataFromServer(item);
                         }
 
                         @Override
@@ -255,7 +263,7 @@ public class FridgeActivity extends AppCompatActivity {
         });
     }
 
-    private void getDataFromServer() {
+    private void getDataFromServer(final MenuItem item) {
 
         Callback<ArrayList<Product>> callback = new Callback<ArrayList<Product>>() {
             @Override
@@ -268,6 +276,11 @@ public class FridgeActivity extends AppCompatActivity {
                 dataBaseService.AddProducts(tmp);
                 getDataFromDataBase();
                 Toast.makeText(FridgeActivity.this, "sync data", Toast.LENGTH_LONG).show();
+                if(item != null)
+                {
+                    item.setEnabled(true);
+                    item.getIcon().setAlpha(255);
+                }
             }
 
             @Override
@@ -275,6 +288,11 @@ public class FridgeActivity extends AppCompatActivity {
                 getDataFromDataBase();
                 t.printStackTrace();
                 Toast.makeText(FridgeActivity.this, "Some problem with internet - getDataFromServer", Toast.LENGTH_LONG).show();
+                if(item != null)
+                {
+                    item.setEnabled(true);
+                    item.getIcon().setAlpha(255);
+                }
             }
         };
         restController.GetAllProducts(callback, user.getLogin(), user.getPassword());
