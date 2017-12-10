@@ -23,6 +23,8 @@ public class Product {
     private  Integer amount;
 
     private transient Integer valueLastModyfide = 0;
+    private transient int isNew = 1;
+    private transient int isDeleted = 1;
 
     private transient boolean  isSync = false;
 
@@ -114,5 +116,44 @@ public class Product {
     public void sync()
     {
         isSync = true;
+    }
+
+    public boolean getIsNew() {
+        return isNew == 0;
+    }
+
+    public int getIsNewInt() {
+        return isNew;
+    }
+
+    public void setIsNew(boolean isNew) {
+        if(isNew)
+            this.isNew = 0;
+        else
+            this.isNew = 1;
+    }
+
+    public void setIsNewInt(int isNew) {
+            this.isNew = isNew;
+    }
+
+    public boolean getIsDeleted() {
+        return isDeleted == 0;
+    }
+
+    public int getIsDeletedInt() {
+        return isDeleted;
+    }
+
+    public void setIsDeleted(boolean isDeleted) {
+        if(isDeleted)
+            this.isDeleted = 0;
+        else
+            this.isDeleted = 1;
+    }
+
+    public void setIsDeletedInt(int isDeleted) {
+        this.isDeleted = isDeleted;
+
     }
 }

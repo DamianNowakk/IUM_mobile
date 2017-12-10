@@ -29,6 +29,8 @@ public class DataBaseService extends SQLiteOpenHelper {
     private static final String PRODUCT_AMOUNT = "Amount";
     private static final String PRODUCT_VALUE_LAST_MODYFIED = "ValueLastModyfied";
     private static final String PRODUCT_ISSYNC = "IsSync";
+    private static final String PRODUCT_ISNEW = "IsNew";
+    private static final String PRODUCT_ISDELETED = "IsDeleted";
 
     private static final String TABLE_DEVICE = "Device";
     private static final String DEVICE_GUID = "Guid";
@@ -62,6 +64,8 @@ public class DataBaseService extends SQLiteOpenHelper {
                 + PRODUCT_AMOUNT + " INTEGER,"
                 + PRODUCT_VALUE_LAST_MODYFIED + " INTEGER,"
                 + PRODUCT_ISSYNC + " INTEGER"
+                + PRODUCT_ISNEW + " INTEGER"
+                + PRODUCT_ISDELETED + " INTEGER"
                 + ")";
         db.execSQL(CREATE_TABLE);
 
@@ -160,6 +164,8 @@ public class DataBaseService extends SQLiteOpenHelper {
         contentValues.put(PRODUCT_AMOUNT, product.getAmount());
         contentValues.put(PRODUCT_VALUE_LAST_MODYFIED, product.getValueLastModyfide());
         contentValues.put(PRODUCT_ISSYNC, product.isSync());
+        contentValues.put(PRODUCT_ISSYNC, product.getIsNewInt());
+        contentValues.put(PRODUCT_ISSYNC, product.getIsDeletedInt());
         long result = db.insert(TABLE_PRODUCT, null, contentValues);
         return result != -1;
     }
@@ -219,6 +225,8 @@ public class DataBaseService extends SQLiteOpenHelper {
                     product.setSync(true);
                 else
                     product.setSync(false);
+                product.setIsNewInt(cursor.getInt(7));
+                product.setIsDeletedInt(cursor.getInt(8));
                 productArrayList.add(product);
             }
         } finally {
@@ -240,6 +248,8 @@ public class DataBaseService extends SQLiteOpenHelper {
         contentValues.put(PRODUCT_AMOUNT, product.getAmount());
         contentValues.put(PRODUCT_VALUE_LAST_MODYFIED, product.getValueLastModyfide());
         contentValues.put(PRODUCT_ISSYNC, product.isSync());
+        contentValues.put(PRODUCT_ISSYNC, product.getIsNewInt());
+        contentValues.put(PRODUCT_ISSYNC, product.getIsDeletedInt());
         long result = db.update(TABLE_PRODUCT, contentValues, "Id = ?", new String[]{Integer.toString(product.getId())});
         return result != -1;
     }
@@ -280,6 +290,8 @@ public class DataBaseService extends SQLiteOpenHelper {
                     product.setSync(true);
                 else
                     product.setSync(false);
+                product.setIsNewInt(cursor.getInt(7));
+                product.setIsDeletedInt(cursor.getInt(8));
                 productArrayList.add(product);
             }
         } finally {
