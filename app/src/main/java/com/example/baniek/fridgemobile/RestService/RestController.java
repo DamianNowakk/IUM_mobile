@@ -62,20 +62,27 @@ public class RestController  {
 
     }
 
-    public void DeleteProducts(int id, String login, String password)
+    public void DeleteProducts(int id,Callback<Product> callback, String login, String password)
     {
+
         Call call = api.DeleteProduct(id, login, password);
-        call.enqueue(new Callback() {
-            @Override
-            public void onResponse(Call call, Response response) {
+        if(callback == null) {
+            call.enqueue(new Callback() {
+                @Override
+                public void onResponse(Call call, Response response) {
 
-            }
+                }
 
-            @Override
-            public void onFailure(Call call, Throwable t) {
+                @Override
+                public void onFailure(Call call, Throwable t) {
 
-            }
-        });
+                }
+            });
+        }
+        else
+        {
+            call.enqueue(callback);
+        }
     }
 
     public void AddProducts(Product product ,Callback<Product> callback, String login, String password)

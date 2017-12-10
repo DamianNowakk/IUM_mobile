@@ -32,6 +32,9 @@ public class DataBaseService extends SQLiteOpenHelper {
     private static final String PRODUCT_ISNEW = "IsNew";
     private static final String PRODUCT_ISDELETED = "IsDeleted";
 
+    private static final String TABLE_PRODUCT_NEW = "ProductNew";
+    private static final String TABLE_PRODUCT_DELETED = "ProductDeleted";
+
     private static final String TABLE_DEVICE = "Device";
     private static final String DEVICE_GUID = "Guid";
 
@@ -63,8 +66,34 @@ public class DataBaseService extends SQLiteOpenHelper {
                 + PRODUCT_PRICE + " REAL,"
                 + PRODUCT_AMOUNT + " INTEGER,"
                 + PRODUCT_VALUE_LAST_MODYFIED + " INTEGER,"
-                + PRODUCT_ISSYNC + " INTEGER"
-                + PRODUCT_ISNEW + " INTEGER"
+                + PRODUCT_ISSYNC + " INTEGER,"
+                + PRODUCT_ISNEW + " INTEGER,"
+                + PRODUCT_ISDELETED + " INTEGER"
+                + ")";
+        db.execSQL(CREATE_TABLE);
+
+        CREATE_TABLE = "CREATE TABLE " + TABLE_PRODUCT_NEW + "("
+                + PRODUCT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + PRODUCT_USER_LOGIN + " TEXT,"
+                + PRODUCT_NAME + " TEXT,"
+                + PRODUCT_PRICE + " REAL,"
+                + PRODUCT_AMOUNT + " INTEGER,"
+                + PRODUCT_VALUE_LAST_MODYFIED + " INTEGER,"
+                + PRODUCT_ISSYNC + " INTEGER,"
+                + PRODUCT_ISNEW + " INTEGER,"
+                + PRODUCT_ISDELETED + " INTEGER"
+                + ")";
+        db.execSQL(CREATE_TABLE);
+
+        CREATE_TABLE = "CREATE TABLE " + TABLE_PRODUCT_DELETED + "("
+                + PRODUCT_ID + " INTEGER PRIMARY KEY,"
+                + PRODUCT_USER_LOGIN + " TEXT,"
+                + PRODUCT_NAME + " TEXT,"
+                + PRODUCT_PRICE + " REAL,"
+                + PRODUCT_AMOUNT + " INTEGER,"
+                + PRODUCT_VALUE_LAST_MODYFIED + " INTEGER,"
+                + PRODUCT_ISSYNC + " INTEGER,"
+                + PRODUCT_ISNEW + " INTEGER,"
                 + PRODUCT_ISDELETED + " INTEGER"
                 + ")";
         db.execSQL(CREATE_TABLE);
@@ -79,6 +108,8 @@ public class DataBaseService extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUCT);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUCT_NEW);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUCT_DELETED);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_DEVICE);
         onCreate(db);
     }
@@ -153,20 +184,40 @@ public class DataBaseService extends SQLiteOpenHelper {
     }
 
     //PRODUCT
+
     public boolean AddProduct(Product product)
+    {
+        boolean result = false;
+        if(!product.getIsNew() && !product.getIsDeleted())
+        {
+            result = AddProductBasic(product, TABLE_PRODUCT);
+        }
+        else if(product.getIsNew() && !product.getIsDeleted())
+        {
+            result = AddProductBasic(product, TABLE_PRODUCT_NEW);
+        }
+        else if(product.getIsDeleted())
+        {
+            result = AddProductBasic(product, TABLE_PRODUCT_DELETED);
+        }
+        return result;
+    }
+
+    public boolean AddProductBasic(Product product, String table)
     {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
-        contentValues.put(PRODUCT_ID, product.getId());
+        if(table.equals(TABLE_PRODUCT) || table.equals(TABLE_PRODUCT_DELETED))
+            contentValues.put(PRODUCT_ID, product.getId());
         contentValues.put(PRODUCT_USER_LOGIN, product.getUserLogin());
         contentValues.put(PRODUCT_NAME, product.getName());
         contentValues.put(PRODUCT_PRICE, product.getPrice());
         contentValues.put(PRODUCT_AMOUNT, product.getAmount());
         contentValues.put(PRODUCT_VALUE_LAST_MODYFIED, product.getValueLastModyfide());
         contentValues.put(PRODUCT_ISSYNC, product.isSync());
-        contentValues.put(PRODUCT_ISSYNC, product.getIsNewInt());
-        contentValues.put(PRODUCT_ISSYNC, product.getIsDeletedInt());
-        long result = db.insert(TABLE_PRODUCT, null, contentValues);
+        contentValues.put(PRODUCT_ISNEW, product.getIsNewInt());
+        contentValues.put(PRODUCT_ISDELETED, product.getIsDeletedInt());
+        long result = db.insert(table, null, contentValues);
         return result != -1;
     }
 
@@ -177,37 +228,26 @@ public class DataBaseService extends SQLiteOpenHelper {
         }
     }
 
-    public Product GetProduct(Integer id)
+    public ArrayList<Product> GetProducts(String login)
     {
-        SQLiteDatabase db = this.getWritableDatabase();
-        Product product = new Product();
-        String query = "select * from " + TABLE_PRODUCT + " where " + PRODUCT_ID + " = '" + id + "'";
-        Cursor cursor = db.rawQuery(query, null);
-        if (cursor.getCount() == 0)
-            return null;
-        try {
-            cursor.moveToNext();
-            product.setId(cursor.getInt(0));
-            product.setUserLogin(cursor.getString(1));
-            product.setName(cursor.getString(2));
-            product.setPrice(cursor.getFloat(3));
-            product.setAmount(cursor.getInt(4));
-            product.setValueLastModyfide(cursor.getInt(5));
-            if (cursor.getString(6).equals("1"))
-                product.setSync(true);
-            else
-                product.setSync(false);
-        } finally {
-            cursor.close();
-        }
-        return product;
+        ArrayList<Product> productArrayList = new ArrayList<>();
+
+        ArrayList<Product> productBasicList = GetProductsTable(login, TABLE_PRODUCT);
+        ArrayList<Product> productNewList = GetProductsTable(login, TABLE_PRODUCT_NEW);
+
+        if( productBasicList != null && productBasicList.size() > 0)
+            productArrayList.addAll(productBasicList);
+        if( productNewList != null && productNewList.size() > 0)
+            productArrayList.addAll(productNewList);
+
+        return productArrayList;
     }
 
-    public ArrayList<Product> GetProducts(String login)
+    public ArrayList<Product> GetProductsTable(String login, String table)
     {
         SQLiteDatabase db = this.getWritableDatabase();
         ArrayList<Product> productArrayList = new ArrayList<>();
-        String query = "select * from " + TABLE_PRODUCT + " where " + PRODUCT_USER_LOGIN + " = '" + login + "'";
+        String query = "select * from " + table + " where " + PRODUCT_USER_LOGIN + " = '" + login + "'";
         Cursor cursor = db.rawQuery(query, null);
         if (cursor.getCount() == 0)
             return null;
@@ -235,9 +275,21 @@ public class DataBaseService extends SQLiteOpenHelper {
         return productArrayList;
     }
 
-
-
     public boolean UpdateProduct(Product product)
+    {
+        boolean result = false;
+        if(!product.getIsNew() && !product.getIsDeleted())
+        {
+            result = UpdateProduct(product, TABLE_PRODUCT);
+        }
+        else if(product.getIsNew() && !product.getIsDeleted())
+        {
+            result = UpdateProduct(product, TABLE_PRODUCT_NEW);
+        }
+        return result;
+    }
+
+    public boolean UpdateProduct(Product product, String table)
     {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
@@ -248,9 +300,9 @@ public class DataBaseService extends SQLiteOpenHelper {
         contentValues.put(PRODUCT_AMOUNT, product.getAmount());
         contentValues.put(PRODUCT_VALUE_LAST_MODYFIED, product.getValueLastModyfide());
         contentValues.put(PRODUCT_ISSYNC, product.isSync());
-        contentValues.put(PRODUCT_ISSYNC, product.getIsNewInt());
-        contentValues.put(PRODUCT_ISSYNC, product.getIsDeletedInt());
-        long result = db.update(TABLE_PRODUCT, contentValues, "Id = ?", new String[]{Integer.toString(product.getId())});
+        contentValues.put(PRODUCT_ISNEW, product.getIsNewInt());
+        contentValues.put(PRODUCT_ISDELETED, product.getIsDeletedInt());
+        long result = db.update(table, contentValues, "Id = ?", new String[]{Integer.toString(product.getId())});
         return result != -1;
     }
 
@@ -269,6 +321,24 @@ public class DataBaseService extends SQLiteOpenHelper {
     }
 
     public ArrayList<Product> GetProductsSync(String login)
+    {
+        ArrayList<Product> productArrayList = new ArrayList<>();
+
+        ArrayList<Product> productBasicList = GetProductsToUpdate(login);
+        ArrayList<Product> productNewList = GetProductsTable(login, TABLE_PRODUCT_NEW);
+        ArrayList<Product> productDeletedList = GetProductsTable(login, TABLE_PRODUCT_DELETED);
+
+        if( productBasicList != null && productBasicList.size() > 0)
+            productArrayList.addAll(productBasicList);
+        if( productNewList != null && productNewList.size() > 0)
+            productArrayList.addAll(productNewList);
+        if( productDeletedList != null && productDeletedList.size() > 0)
+            productArrayList.addAll(productDeletedList);
+
+        return productArrayList;
+    }
+
+    public ArrayList<Product> GetProductsToUpdate(String login)
     {
         SQLiteDatabase db = this.getWritableDatabase();
         ArrayList<Product> productArrayList = new ArrayList<>();
@@ -306,4 +376,33 @@ public class DataBaseService extends SQLiteOpenHelper {
         long result = db.delete(TABLE_PRODUCT, "UserLogin = ? AND IsSync = ?", new String[]{login, "0"});
         return result != -1;
     }
+
+    public boolean DeleteProductNew(int id)
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        long result = db.delete(TABLE_PRODUCT_NEW, "Id = ?", new String[]{Integer.toString(id)});
+        return result != -1;
+    }
+
+    public boolean DeleteProductsNew(String login)
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        long result = db.delete(TABLE_PRODUCT_NEW, "UserLogin = ?", new String[]{login});
+        return result != -1;
+    }
+
+    public boolean DeleteProductDeleted(int id)
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        long result = db.delete(TABLE_PRODUCT_DELETED, "Id = ?", new String[]{Integer.toString(id)});
+        return result != -1;
+    }
+
+    public boolean DeleteProductsDeleted(String login)
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        long result = db.delete(TABLE_PRODUCT_DELETED, "UserLogin = ?", new String[]{login});
+        return result != -1;
+    }
+
 }

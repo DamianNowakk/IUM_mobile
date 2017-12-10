@@ -94,7 +94,6 @@ public class FridgeActivity extends AppCompatActivity {
         if(id == R.id.sync_button)
         {
             sync();
-            Toast.makeText(FridgeActivity.this, "sync data", Toast.LENGTH_LONG).show();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -103,18 +102,26 @@ public class FridgeActivity extends AppCompatActivity {
         if(isOnline())
         {
             ArrayList<Product> syncProducts = dataBaseService.GetProductsSync(user.getLogin());
-            if(syncProducts == null) {
+            if(syncProducts == null || syncProducts.size() == 0) {
                 getDataFromServer();
                 return;
             }
             for (int i = 0; i < syncProducts.size(); i++) {
-                Product product = syncProducts.get(i);
+                final Product product = syncProducts.get(i);
 
                 Callback callback;
                 if(i == syncProducts.size() - 1) {
                     callback = new Callback() {
                         @Override
                         public void onResponse(Call call, Response response) {
+                            if(product.getIsDeleted())
+                            {
+                                dataBaseService.DeleteProductDeleted(product.getId());
+                            }
+                            else if(product.getIsNew())
+                            {
+                                dataBaseService.DeleteProductNew(product.getId());
+                            }
                             getDataFromServer();
                         }
 
@@ -129,7 +136,14 @@ public class FridgeActivity extends AppCompatActivity {
                     callback = new Callback() {
                         @Override
                         public void onResponse(Call call, Response response) {
-
+                            if(product.getIsDeleted())
+                            {
+                                dataBaseService.DeleteProductDeleted(product.getId());
+                            }
+                            else if(product.getIsNew())
+                            {
+                                dataBaseService.DeleteProductNew(product.getId());
+                            }
                         }
 
                         @Override
@@ -138,7 +152,19 @@ public class FridgeActivity extends AppCompatActivity {
                         }
                     };
                 }
-                restController.ChangeAmount(product.getId(), product.getValueLastModyfide(), callback, user.getLogin(), user.getPassword());
+                if(product.getIsDeleted())
+                {
+                    restController.DeleteProducts(product.getId(), callback, user.getLogin(), user.getPassword());
+                }
+                else if(product.getIsNew())
+                {
+                    restController.AddProducts(product, callback, user.getLogin(), user.getPassword());
+                }
+                else
+                {
+                    restController.ChangeAmount(product.getId(), product.getValueLastModyfide(), callback, user.getLogin(), user.getPassword());
+                }
+
             }
 
 
@@ -189,9 +215,30 @@ public class FridgeActivity extends AppCompatActivity {
                         .setPositiveButton("yes", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
-                                int id = products.getProduct(position).getId();
-                                restController.DeleteProducts(id , user.getLogin(), user.getPassword());
-                                dataBaseService.DeleteProduct(id);
+                                Product product = products.getProduct(position);
+                                int id = product.getId();
+
+                                if(product.getIsNew())
+                                {
+                                    dataBaseService.DeleteProductNew(id);
+                                }
+                                else
+                                {
+                                    if(isOnline())
+                                    {
+                                        restController.DeleteProducts(id ,null, user.getLogin(), user.getPassword());
+                                        dataBaseService.DeleteProduct(id);
+                                    }
+                                    else
+                                    {
+                                        dataBaseService.DeleteProduct(id);
+                                        product.setIsDeleted(true);
+                                        dataBaseService.AddProduct(product);
+                                    }
+                                }
+
+
+
                                 products.deleteProduct(position);
                                 productAdapter.notifyDataSetChanged();
                             }
@@ -219,7 +266,8 @@ public class FridgeActivity extends AppCompatActivity {
                     product.setSync(true);
                 }
                 dataBaseService.AddProducts(tmp);
-                setData(tmp);
+                getDataFromDataBase();
+                Toast.makeText(FridgeActivity.this, "sync data", Toast.LENGTH_LONG).show();
             }
 
             @Override
@@ -272,10 +320,7 @@ public class FridgeActivity extends AppCompatActivity {
                             product.setSync(true);
                             dataBaseService.AddProduct(product);
 
-                            dataBaseService.AddProduct(product);
-
-                            products.addProduct(product);
-                            productAdapter.notifyDataSetChanged();
+                            getDataFromDataBase();
 
                             addDialog.dismiss();
                         }
@@ -290,8 +335,10 @@ public class FridgeActivity extends AppCompatActivity {
                 }
                 else
                 {
-                    product.setSync(false);
+                    product.setIsNew(true);
                     dataBaseService.AddProduct(product);
+                    getDataFromDataBase();
+                    addDialog.dismiss();
                 }
             }
         });

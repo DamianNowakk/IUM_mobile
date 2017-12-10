@@ -23,10 +23,10 @@ public class Product {
     private  Integer amount;
 
     private transient Integer valueLastModyfide = 0;
-    private transient int isNew = 1;
-    private transient int isDeleted = 1;
 
     private transient boolean  isSync = false;
+    private transient int isNew = 1;
+    private transient int isDeleted = 1;
 
     public Product(Integer id, String userLogin, String name, float price, Integer amount, Integer valueLastModyfide, boolean isSync) {
         this.id = id;
